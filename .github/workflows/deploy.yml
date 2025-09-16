@@ -1,0 +1,13 @@
+name: Vercel Deployment Check
+
+on:
+  push:
+    branches:
+      - main # oder master, falls dein Haupt-Branch so heißt
+
+jobs:
+  placeholder-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acknowledging Vercel Git deployment
+        run: echo "This file exists to ensure the workflow structure is correct. Vercel handles the actual deployment via its Git Integration."
