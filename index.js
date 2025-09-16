@@ -2,13 +2,11 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { GoogleGenAI, Modality, Type } from "@google/genai";
-
 // Function to handle particle animation
 const initParticles = () => {
     const particlesContainer = document.querySelector('.particles');
-    if (!particlesContainer) return;
-
+    if (!particlesContainer)
+        return;
     // Create a document fragment to improve performance
     const fragment = document.createDocumentFragment();
     for (let i = 0; i < 50; i++) {
@@ -21,24 +19,22 @@ const initParticles = () => {
     }
     particlesContainer.appendChild(fragment);
 };
-
 // Function to handle navbar scroll effect
 const handleNavbarScroll = () => {
     const navbar = document.getElementById('navbar');
     if (navbar) {
         if (window.scrollY > 50) {
             navbar.classList.add('scrolled');
-        } else {
+        }
+        else {
             navbar.classList.remove('scrolled');
         }
     }
 };
-
 // Function to set up the mobile menu toggle
 const setupMobileMenu = () => {
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
-
     if (menuToggle && navLinks) {
         menuToggle.addEventListener('click', () => {
             menuToggle.classList.toggle('active');
@@ -46,22 +42,20 @@ const setupMobileMenu = () => {
         });
     }
 };
-
 // Function for smooth scrolling
 const setupSmoothScrolling = () => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const href = this.getAttribute('href');
-            if (!href) return;
-
+            if (!href)
+                return;
             const target = document.querySelector(href);
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
                 });
-                
                 // Close mobile menu on link click
                 const navLinks = document.getElementById('navLinks');
                 const menuToggle = document.getElementById('menuToggle');
@@ -73,14 +67,12 @@ const setupSmoothScrolling = () => {
         });
     });
 };
-
 // Function to set up intersection observer for animations
 const setupIntersectionObserver = () => {
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -91,7 +83,6 @@ const setupIntersectionObserver = () => {
             }
         });
     }, observerOptions);
-
     document.querySelectorAll('.service-card, .crypto-card, .stat-card').forEach(el => {
         const element = el;
         element.style.opacity = '0';
@@ -100,13 +91,12 @@ const setupIntersectionObserver = () => {
         observer.observe(element);
     });
 };
-
 // Function to handle wallet connect button
 const setupWalletButton = () => {
     const walletBtn = document.querySelector('.wallet-btn');
     if (walletBtn) {
         const originalContent = walletBtn.innerHTML;
-        walletBtn.addEventListener('click', function() {
+        walletBtn.addEventListener('click', function () {
             this.innerHTML = '<span class="loading"></span> Verbinde...';
             this.disabled = true;
             setTimeout(() => {
@@ -117,12 +107,11 @@ const setupWalletButton = () => {
         });
     }
 };
-
 // Function to simulate live crypto prices
 const simulateCryptoPrices = () => {
     const priceElements = document.querySelectorAll('.price-change');
-    if(priceElements.length === 0) return;
-
+    if (priceElements.length === 0)
+        return;
     const updatePrices = () => {
         priceElements.forEach(el => {
             const change = (Math.random() - 0.5) * 5;
@@ -130,15 +119,13 @@ const simulateCryptoPrices = () => {
             el.className = 'price-change ' + (change >= 0 ? 'positive' : 'negative');
         });
     };
-    
     updatePrices(); // Initial update
     setInterval(updatePrices, 5000);
 };
-
 // Function to handle locked service card clicks
 const setupServiceCardClicks = () => {
     document.querySelectorAll('.service-card:not(#ai-chat-card):not(#image-gen-card):not(#data-analysis-card):not(#translation-card):not(#audio-processing-card):not(#code-assistant-card)').forEach(card => {
-        card.addEventListener('click', function() {
+        card.addEventListener('click', function () {
             const locked = this.querySelector('.service-locked');
             if (locked) {
                 locked.style.animation = 'shake 0.5s';
@@ -150,7 +137,6 @@ const setupServiceCardClicks = () => {
         });
     });
 };
-
 // Function to set up and manage the AI Chat Assistant
 const setupAiChat = () => {
     const modalOverlay = document.getElementById('aiChatModal');
@@ -159,30 +145,27 @@ const setupAiChat = () => {
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
-
-    if (!modalOverlay || !aiChatCard || !closeButton || !chatForm || !chatInput || !chatMessages) return;
-
-    let chat = null;
+    if (!modalOverlay || !aiChatCard || !closeButton || !chatForm || !chatInput || !chatMessages)
+        return;
+    let chatHistory = [];
     let thinking = false;
-
     const addMessage = (text, sender) => {
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-message', sender);
-        
         if (sender === 'thinking') {
             messageElement.innerHTML = `<span></span><span></span><span></span>`;
-        } else {
+        }
+        else {
             messageElement.textContent = text;
         }
-
         chatMessages.appendChild(messageElement);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     };
-
     const setThinking = (isThinking) => {
         if (isThinking && !thinking) {
             addMessage('', 'thinking');
-        } else if (!isThinking && thinking) {
+        }
+        else if (!isThinking && thinking) {
             const thinkingMessage = chatMessages.querySelector('.thinking');
             if (thinkingMessage) {
                 thinkingMessage.remove();
@@ -190,32 +173,16 @@ const setupAiChat = () => {
         }
         thinking = isThinking;
     };
-
-    const openModal = async () => {
+    const openModal = () => {
         modalOverlay.classList.add('visible');
         chatInput.focus();
-        
-        try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            chat = ai.chats.create({
-              model: 'gemini-2.5-flash',
-              config: {
-                systemInstruction: 'You are a helpful and friendly AI assistant for NeuralPay, a platform that provides AI services through crypto payments. Keep your answers concise and friendly.',
-              },
-            });
-            addMessage("Hallo! Wie kann ich dir heute helfen, die Welt von AI und Krypto zu erkunden?", 'ai');
-        } catch (error) {
-            console.error("Error initializing Gemini:", error);
-            addMessage("Entschuldigung, der AI-Assistent ist im Moment nicht verfügbar.", 'ai');
-        }
+        addMessage("Hallo! Wie kann ich dir heute helfen, die Welt von AI und Krypto zu erkunden?", 'ai');
     };
-
     const closeModal = () => {
         modalOverlay.classList.remove('visible');
         chatMessages.innerHTML = ''; // Clear chat history
-        chat = null;
+        chatHistory = [];
     };
-
     aiChatCard.addEventListener('click', () => {
         const lockedIcon = aiChatCard.querySelector('.service-locked');
         if (lockedIcon) {
@@ -226,36 +193,45 @@ const setupAiChat = () => {
         }
         setTimeout(openModal, 150);
     });
-
     closeButton.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) {
             closeModal();
         }
     });
-
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const userInput = chatInput.value.trim();
-        if (!userInput || !chat || thinking) return;
-
+        if (!userInput || thinking)
+            return;
         addMessage(userInput, 'user');
+        chatHistory.push({ role: 'user', parts: [{ text: userInput }] });
         chatInput.value = '';
         setThinking(true);
-        
         try {
-            const response = await chat.sendMessage({ message: userInput });
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: 'chat',
+                    payload: { history: chatHistory.slice(0, -1), message: userInput }
+                })
+            });
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            const data = await response.json();
             setThinking(false);
-            addMessage(response.text, 'ai');
-        } catch(error) {
+            addMessage(data.text, 'ai');
+            chatHistory.push({ role: 'model', parts: [{ text: data.text }] });
+        }
+        catch (error) {
             console.error("Error sending message:", error);
             setThinking(false);
             addMessage("Es tut mir leid, es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.", 'ai');
         }
     });
 };
-
-
 // Function to set up and manage the AI Image Editor
 const setupImageGeneration = () => {
     const modal = document.getElementById('imageGenModal');
@@ -270,19 +246,12 @@ const setupImageGeneration = () => {
     const imageResult = document.getElementById('imageResult');
     const resultPlaceholder = document.getElementById('resultPlaceholder');
     const loadingOverlay = document.querySelector('.image-result-container .loading-overlay');
-
-    if (!modal || !card || !closeButton || !form || !input || !submitButton || !imageUpload || !imagePreview || !uploadPlaceholder || !imageResult || !resultPlaceholder || !loadingOverlay) return;
-    
+    if (!modal || !card || !closeButton || !form || !input || !submitButton || !imageUpload || !imagePreview || !uploadPlaceholder || !imageResult || !resultPlaceholder || !loadingOverlay)
+        return;
     let uploadedImageData = null;
-    let ai = null;
-    
     const openModal = () => {
         modal.classList.add('visible');
-        if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        }
     };
-
     const closeModal = () => {
         modal.classList.remove('visible');
         // Reset state on close
@@ -298,7 +267,6 @@ const setupImageGeneration = () => {
         input.disabled = true;
         submitButton.disabled = true;
     };
-    
     card.addEventListener('click', () => {
         const lockedIcon = card.querySelector('.service-locked');
         if (lockedIcon) {
@@ -309,87 +277,79 @@ const setupImageGeneration = () => {
         }
         setTimeout(openModal, 150);
     });
-
     closeButton.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
-
     imageUpload.addEventListener('change', (event) => {
         const file = event.target.files?.[0];
-        if (!file) return;
-
+        if (!file)
+            return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const result = e.target?.result;
             imagePreview.src = result;
             imagePreview.style.display = 'block';
             uploadPlaceholder.style.display = 'none';
-            
             const [header, base64] = result.split(',');
             const mimeType = header.match(/:(.*?);/)?.[1];
             if (mimeType && base64) {
-                 uploadedImageData = { mimeType, data: base64 };
-                 input.disabled = false;
-                 submitButton.disabled = false;
-                 input.focus();
-            } else {
-                 alert("Konnte Bild nicht verarbeiten. Bitte versuche ein anderes Format (JPEG, PNG).");
-                 closeModal();
+                uploadedImageData = { mimeType, data: base64 };
+                input.disabled = false;
+                submitButton.disabled = false;
+                input.focus();
+            }
+            else {
+                alert("Konnte Bild nicht verarbeiten. Bitte versuche ein anderes Format (JPEG, PNG).");
+                closeModal();
             }
         };
         reader.readAsDataURL(file);
     });
-
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const prompt = input.value.trim();
-        if (!prompt || !uploadedImageData || !ai) return;
-
+        if (!prompt || !uploadedImageData)
+            return;
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
         input.disabled = true;
-
         try {
-            const imagePart = { inlineData: uploadedImageData };
-            const textPart = { text: prompt };
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [imagePart, textPart] },
-                config: {
-                    responseModalities: [Modality.IMAGE, Modality.TEXT],
-                },
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: 'image-edit',
+                    payload: { image: uploadedImageData, prompt }
+                })
             });
-
-            let foundImage = false;
-            for (const part of response.candidates[0].content.parts) {
-                if (part.inlineData) {
-                    const { mimeType, data } = part.inlineData;
-                    imageResult.src = `data:${mimeType};base64,${data}`;
-                    imageResult.style.display = 'block';
-                    resultPlaceholder.style.display = 'none';
-                    foundImage = true;
-                    break;
-                }
+            if (!response.ok) {
+                throw new Error('API request failed');
             }
-            if (!foundImage) {
+            const data = await response.json();
+            if (data.image) {
+                const { mimeType, data: imageData } = data.image;
+                imageResult.src = `data:${mimeType};base64,${imageData}`;
+                imageResult.style.display = 'block';
+                resultPlaceholder.style.display = 'none';
+            }
+            else {
                 alert("Die KI konnte kein Bild generieren. Versuche eine andere Anweisung.");
             }
-
-        } catch (error) {
+        }
+        catch (error) {
             console.error("Error generating image:", error);
             alert("Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.");
-        } finally {
+        }
+        finally {
             loadingOverlay.style.display = 'none';
             submitButton.disabled = false;
             input.disabled = false;
         }
     });
 };
-
 // Function to set up and manage the AI Data Analysis
 const setupDataAnalysis = () => {
     const modal = document.getElementById('dataAnalysisModal');
@@ -401,19 +361,12 @@ const setupDataAnalysis = () => {
     const resultContainer = document.getElementById('dataAnalysisResult');
     const placeholder = document.getElementById('dataAnalysisPlaceholder');
     const loadingOverlay = document.querySelector('#dataAnalysisBody .loading-overlay');
-
-    if (!modal || !card || !closeButton || !form || !input || !submitButton || !resultContainer || !placeholder || !loadingOverlay) return;
-
-    let ai = null;
-
+    if (!modal || !card || !closeButton || !form || !input || !submitButton || !resultContainer || !placeholder || !loadingOverlay)
+        return;
     const openModal = () => {
         modal.classList.add('visible');
-        if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        }
         input.focus();
     };
-
     const closeModal = () => {
         modal.classList.remove('visible');
         input.value = '';
@@ -421,7 +374,6 @@ const setupDataAnalysis = () => {
         resultContainer.style.display = 'none';
         placeholder.style.display = 'block';
     };
-    
     card.addEventListener('click', () => {
         const lockedIcon = card.querySelector('.service-locked');
         if (lockedIcon) {
@@ -432,62 +384,39 @@ const setupDataAnalysis = () => {
         }
         setTimeout(openModal, 150);
     });
-
     closeButton.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
-
     input.addEventListener('input', () => {
         input.style.height = 'auto';
         input.style.height = (input.scrollHeight) + 'px';
     });
-
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const description = input.value.trim();
-        if (!description || !ai) return;
-
+        if (!description)
+            return;
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
         input.disabled = true;
         placeholder.style.display = 'none';
         resultContainer.style.display = 'none';
-
-        const schema = {
-            type: Type.OBJECT,
-            properties: {
-                title: { type: Type.STRING, description: "Ein kurzer, prägnanter Titel für die Analyse." },
-                summary: { type: Type.STRING, description: "Eine Zusammenfassung der Analyse in 2-3 Sätzen." },
-                key_insights: {
-                    type: Type.ARRAY,
-                    description: "Eine Liste von 3-5 wichtigen Erkenntnissen aus den Daten.",
-                    items: { type: Type.STRING }
-                },
-                recommendations: {
-                    type: Type.ARRAY,
-                    description: "Eine Liste von 2-3 umsetzbaren Empfehlungen basierend auf der Analyse.",
-                    items: { type: Type.STRING }
-                }
-            }
-        };
-
         try {
-            const prompt = `Du bist ein erfahrener Datenanalyst. Basierend auf der folgenden Beschreibung, generiere ein plausibles, fiktives Datenset in deinem Gedächtnis (zeige es nicht an). Analysiere dieses Datenset und gib einen Titel, eine Zusammenfassung, 3-5 Schlüsselerkenntnisse und 2-3 Handlungsempfehlungen zurück. Die Beschreibung des Nutzers ist: "${description}". Formatiere deine Antwort ausschließlich als JSON gemäß dem vorgegebenen Schema.`;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: schema,
-                }
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: 'data-analysis',
+                    payload: { description }
+                })
             });
-
-            const result = JSON.parse(response.text);
-
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            const result = await response.json();
             resultContainer.innerHTML = `
                 <h3>${result.title}</h3>
                 <p>${result.summary}</p>
@@ -501,19 +430,19 @@ const setupDataAnalysis = () => {
                 </div>
             `;
             resultContainer.style.display = 'flex';
-
-        } catch (error) {
+        }
+        catch (error) {
             console.error("Error during data analysis:", error);
             placeholder.style.display = 'block';
             placeholder.textContent = "Es tut mir leid, es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.";
-        } finally {
+        }
+        finally {
             loadingOverlay.style.display = 'none';
             submitButton.disabled = false;
             input.disabled = false;
         }
     });
 };
-
 // Function to set up and manage the AI Translation service
 const setupTranslation = () => {
     const modal = document.getElementById('translationModal');
@@ -526,25 +455,17 @@ const setupTranslation = () => {
     const sourceText = document.getElementById('sourceText');
     const targetText = document.getElementById('targetText');
     const loadingOverlay = document.querySelector('#translationBody .loading-overlay');
-
-    if (!modal || !card || !closeButton || !form || !submitButton || !sourceLang || !targetLang || !sourceText || !targetText || !loadingOverlay) return;
-
-    let ai = null;
-
+    if (!modal || !card || !closeButton || !form || !submitButton || !sourceLang || !targetLang || !sourceText || !targetText || !loadingOverlay)
+        return;
     const openModal = () => {
         modal.classList.add('visible');
-        if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        }
         sourceText.focus();
     };
-
     const closeModal = () => {
         modal.classList.remove('visible');
         sourceText.value = '';
         targetText.value = '';
     };
-
     card.addEventListener('click', () => {
         const lockedIcon = card.querySelector('.service-locked');
         if (lockedIcon) {
@@ -555,47 +476,48 @@ const setupTranslation = () => {
         }
         setTimeout(openModal, 150);
     });
-
     closeButton.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
-
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const textToTranslate = sourceText.value.trim();
         const fromLang = sourceLang.value;
         const toLang = targetLang.value;
-
-        if (!textToTranslate || !ai) return;
-
+        if (!textToTranslate)
+            return;
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
         sourceText.disabled = true;
-
         try {
-            const prompt = `Translate the following text from ${fromLang} to ${toLang}. Provide only the translated text, without any additional explanations or context. The text is: "${textToTranslate}"`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: 'translate',
+                    payload: { text: textToTranslate, from: fromLang, to: toLang }
+                })
             });
-
-            targetText.value = response.text;
-
-        } catch (error) {
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            const data = await response.json();
+            targetText.value = data.text;
+        }
+        catch (error) {
             console.error("Error during translation:", error);
             targetText.value = "Es tut mir leid, es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.";
-        } finally {
+        }
+        finally {
             loadingOverlay.style.display = 'none';
             submitButton.disabled = false;
             sourceText.disabled = false;
         }
     });
 };
-
 // Function to set up and manage the AI Audio Processing service
 const setupAudioProcessing = () => {
     const modal = document.getElementById('audioProcessingModal');
@@ -607,19 +529,12 @@ const setupAudioProcessing = () => {
     const transcriptionResult = document.getElementById('transcriptionResult');
     const loadingOverlay = document.querySelector('#audioProcessingBody .loading-overlay');
     const audioFileName = document.getElementById('audioFileName');
-
-    if (!modal || !card || !closeButton || !form || !submitButton || !audioUpload || !transcriptionResult || !loadingOverlay || !audioFileName) return;
-
-    let ai = null;
+    if (!modal || !card || !closeButton || !form || !submitButton || !audioUpload || !transcriptionResult || !loadingOverlay || !audioFileName)
+        return;
     let uploadedAudioData = null;
-
     const openModal = () => {
         modal.classList.add('visible');
-        if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        }
     };
-
     const closeModal = () => {
         modal.classList.remove('visible');
         uploadedAudioData = null;
@@ -628,7 +543,6 @@ const setupAudioProcessing = () => {
         audioFileName.textContent = '';
         submitButton.disabled = true;
     };
-
     card.addEventListener('click', () => {
         const lockedIcon = card.querySelector('.service-locked');
         if (lockedIcon) {
@@ -639,64 +553,64 @@ const setupAudioProcessing = () => {
         }
         setTimeout(openModal, 150);
     });
-
     closeButton.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
-
     audioUpload.addEventListener('change', (event) => {
         const file = event.target.files?.[0];
-        if (!file) return;
-
+        if (!file)
+            return;
         const reader = new FileReader();
         reader.onload = (e) => {
             const result = e.target?.result;
             const [header, base64] = result.split(',');
             const mimeType = header.match(/:(.*?);/)?.[1];
-
             if (mimeType && base64) {
-                 uploadedAudioData = { mimeType, data: base64 };
-                 submitButton.disabled = false;
-                 audioFileName.textContent = file.name;
-            } else {
-                 alert("Konnte Audiodatei nicht verarbeiten. Bitte versuche ein anderes Format (MP3, WAV, etc.).");
-                 closeModal();
+                uploadedAudioData = { mimeType, data: base64 };
+                submitButton.disabled = false;
+                audioFileName.textContent = file.name;
+            }
+            else {
+                alert("Konnte Audiodatei nicht verarbeiten. Bitte versuche ein anderes Format (MP3, WAV, etc.).");
+                closeModal();
             }
         };
         reader.readAsDataURL(file);
     });
-
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!uploadedAudioData || !ai) return;
-
+        if (!uploadedAudioData)
+            return;
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
-
         try {
-            const audioPart = { inlineData: uploadedAudioData };
-            const textPart = { text: "Transcribe this audio file." };
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: { parts: [audioPart, textPart] },
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: 'audio-transcribe',
+                    payload: { audio: uploadedAudioData }
+                })
             });
-
-            transcriptionResult.value = response.text;
-
-        } catch (error) {
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            const data = await response.json();
+            transcriptionResult.value = data.text;
+        }
+        catch (error) {
             console.error("Error during transcription:", error);
             transcriptionResult.value = "Es tut mir leid, es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.";
-        } finally {
+        }
+        finally {
             loadingOverlay.style.display = 'none';
             submitButton.disabled = false;
         }
     });
 };
-
 // Function to set up and manage the AI Code Assistant
 const setupCodeAssistant = () => {
     const modal = document.getElementById('codeAssistantModal');
@@ -710,19 +624,12 @@ const setupCodeAssistant = () => {
     const codeResult = document.getElementById('codeResult');
     const placeholder = document.getElementById('codeAssistantPlaceholder');
     const loadingOverlay = document.querySelector('#codeAssistantBody .loading-overlay');
-
-    if (!modal || !card || !closeButton || !form || !input || !languageSelect || !submitButton || !resultContainer || !codeResult || !placeholder || !loadingOverlay) return;
-
-    let ai = null;
-
+    if (!modal || !card || !closeButton || !form || !input || !languageSelect || !submitButton || !resultContainer || !codeResult || !placeholder || !loadingOverlay)
+        return;
     const openModal = () => {
         modal.classList.add('visible');
-        if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        }
         input.focus();
     };
-
     const closeModal = () => {
         modal.classList.remove('visible');
         input.value = '';
@@ -730,7 +637,6 @@ const setupCodeAssistant = () => {
         resultContainer.style.display = 'none';
         placeholder.style.display = 'block';
     };
-    
     card.addEventListener('click', () => {
         const lockedIcon = card.querySelector('.service-locked');
         if (lockedIcon) {
@@ -741,55 +647,55 @@ const setupCodeAssistant = () => {
         }
         setTimeout(openModal, 150);
     });
-
     closeButton.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
-
     input.addEventListener('input', () => {
         input.style.height = 'auto';
         input.style.height = (input.scrollHeight) + 'px';
     });
-
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const description = input.value.trim();
         const language = languageSelect.value;
-        if (!description || !ai) return;
-
+        if (!description)
+            return;
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
         input.disabled = true;
         placeholder.style.display = 'none';
         resultContainer.style.display = 'none';
-
         try {
-            const prompt = `You are an expert programmer. Your task is to act as a code assistant. The user is working with ${language}. The user's request is: "${description}". Provide only the code block as a response, without any additional explanations, introductions, or markdown formatting like \`\`\`${language.toLowerCase()}\n. Just the raw code.`;
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task: 'code-assist',
+                    payload: { description, language }
+                })
             });
-
-            codeResult.textContent = response.text;
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            const data = await response.json();
+            codeResult.textContent = data.text;
             resultContainer.style.display = 'block';
-
-        } catch (error) {
+        }
+        catch (error) {
             console.error("Error during code generation:", error);
             placeholder.style.display = 'block';
             placeholder.textContent = "Es tut mir leid, es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.";
-        } finally {
+        }
+        finally {
             loadingOverlay.style.display = 'none';
             submitButton.disabled = false;
             input.disabled = false;
         }
     });
 };
-
-
 // Main function to initialize all scripts
 const main = () => {
     initParticles();
@@ -806,13 +712,15 @@ const main = () => {
     setupTranslation();
     setupAudioProcessing();
     setupCodeAssistant();
-    
     window.addEventListener('scroll', handleNavbarScroll);
 };
-
 // Wait for the DOM to be fully loaded before running the scripts
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', main);
-} else {
+}
+else {
     main();
 }
+
+// Fix: Add export to treat file as a module and prevent global scope conflicts.
+export {};
