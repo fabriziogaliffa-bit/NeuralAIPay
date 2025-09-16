@@ -196,7 +196,7 @@ const setupAiChat = () => {
         chatInput.focus();
         
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             chat = ai.chats.create({
               model: 'gemini-2.5-flash',
               config: {
@@ -279,7 +279,7 @@ const setupImageGeneration = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         }
     };
 
@@ -409,7 +409,7 @@ const setupDataAnalysis = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         }
         input.focus();
     };
@@ -534,7 +534,7 @@ const setupTranslation = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         }
         sourceText.focus();
     };
@@ -616,7 +616,7 @@ const setupAudioProcessing = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         }
     };
 
@@ -718,7 +718,7 @@ const setupCodeAssistant = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         }
         input.focus();
     };
