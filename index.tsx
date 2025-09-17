@@ -2,6 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
+import { GoogleGenAI, Chat, Modality, Type } from "@google/genai";
 
 // Function to handle particle animation
 const initParticles = () => {
@@ -161,7 +162,7 @@ const setupAiChat = () => {
 
     if (!modalOverlay || !aiChatCard || !closeButton || !chatForm || !chatInput || !chatMessages) return;
 
-    let chatHistory: { role: string; parts: { text: string }[] }[] = [];
+    let chat: Chat | null = null;
     let thinking = false;
 
     const addMessage = (text: string, sender: 'user' | 'ai' | 'thinking' | 'error') => {
@@ -190,16 +191,29 @@ const setupAiChat = () => {
         thinking = isThinking;
     };
 
-    const openModal = () => {
+    const openModal = async () => {
         modalOverlay.classList.add('visible');
         chatInput.focus();
-        addMessage("Hallo! Wie kann ich dir heute helfen, die Welt von AI und Krypto zu erkunden?", 'ai');
+        
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            chat = ai.chats.create({
+              model: 'gemini-2.5-flash',
+              config: {
+                systemInstruction: 'You are a helpful and friendly AI assistant for NeuralPay, a platform that provides AI services through crypto payments. Keep your answers concise and friendly.',
+              },
+            });
+            addMessage("Hallo! Wie kann ich dir heute helfen, die Welt von AI und Krypto zu erkunden?", 'ai');
+        } catch (error) {
+            console.error("Error initializing Gemini:", error);
+            addMessage("Entschuldigung, der AI-Assistent ist im Moment nicht verfügbar.", 'ai');
+        }
     };
 
     const closeModal = () => {
         modalOverlay.classList.remove('visible');
         chatMessages.innerHTML = ''; // Clear chat history
-        chatHistory = [];
+        chat = null;
     };
 
     aiChatCard.addEventListener('click', () => {
@@ -223,31 +237,16 @@ const setupAiChat = () => {
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const userInput = chatInput.value.trim();
-        if (!userInput || thinking) return;
+        if (!userInput || !chat || thinking) return;
 
         addMessage(userInput, 'user');
-        chatHistory.push({ role: 'user', parts: [{ text: userInput }] });
         chatInput.value = '';
         setThinking(true);
         
         try {
-            const response = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: 'chat',
-                    payload: { history: chatHistory.slice(0, -1), message: userInput }
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
-            const data = await response.json();
+            const response = await chat.sendMessage({ message: userInput });
             setThinking(false);
-            addMessage(data.text, 'ai');
-            chatHistory.push({ role: 'model', parts: [{ text: data.text }] });
-
+            addMessage(response.text, 'ai');
         } catch(error) {
             console.error("Error sending message:", error);
             setThinking(false);
@@ -255,6 +254,7 @@ const setupAiChat = () => {
         }
     });
 };
+
 
 // Function to set up and manage the AI Image Editor
 const setupImageGeneration = () => {
@@ -274,9 +274,13 @@ const setupImageGeneration = () => {
     if (!modal || !card || !closeButton || !form || !input || !submitButton || !imageUpload || !imagePreview || !uploadPlaceholder || !imageResult || !resultPlaceholder || !loadingOverlay) return;
     
     let uploadedImageData: { mimeType: string; data: string } | null = null;
+    let ai: GoogleGenAI | null = null;
     
     const openModal = () => {
         modal.classList.add('visible');
+        if (!ai) {
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        }
     };
 
     const closeModal = () => {
@@ -342,34 +346,36 @@ const setupImageGeneration = () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const prompt = input.value.trim();
-        if (!prompt || !uploadedImageData) return;
+        if (!prompt || !uploadedImageData || !ai) return;
 
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
         input.disabled = true;
 
         try {
-            const response = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: 'image-edit',
-                    payload: { image: uploadedImageData, prompt }
-                })
+            const imagePart = { inlineData: uploadedImageData };
+            const textPart = { text: prompt };
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image-preview',
+                contents: { parts: [imagePart, textPart] },
+                config: {
+                    responseModalities: [Modality.IMAGE, Modality.TEXT],
+                },
             });
 
-            if (!response.ok) {
-                throw new Error('API request failed');
+            let foundImage = false;
+            for (const part of response.candidates[0].content.parts) {
+                if (part.inlineData) {
+                    const { mimeType, data } = part.inlineData;
+                    imageResult.src = `data:${mimeType};base64,${data}`;
+                    imageResult.style.display = 'block';
+                    resultPlaceholder.style.display = 'none';
+                    foundImage = true;
+                    break;
+                }
             }
-
-            const data = await response.json();
-
-            if (data.image) {
-                const { mimeType, data: imageData } = data.image;
-                imageResult.src = `data:${mimeType};base64,${imageData}`;
-                imageResult.style.display = 'block';
-                resultPlaceholder.style.display = 'none';
-            } else {
+            if (!foundImage) {
                 alert("Die KI konnte kein Bild generieren. Versuche eine andere Anweisung.");
             }
 
@@ -398,8 +404,13 @@ const setupDataAnalysis = () => {
 
     if (!modal || !card || !closeButton || !form || !input || !submitButton || !resultContainer || !placeholder || !loadingOverlay) return;
 
+    let ai: GoogleGenAI | null = null;
+
     const openModal = () => {
         modal.classList.add('visible');
+        if (!ai) {
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        }
         input.focus();
     };
 
@@ -437,7 +448,7 @@ const setupDataAnalysis = () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const description = input.value.trim();
-        if (!description) return;
+        if (!description || !ai) return;
 
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
@@ -445,21 +456,37 @@ const setupDataAnalysis = () => {
         placeholder.style.display = 'none';
         resultContainer.style.display = 'none';
 
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                title: { type: Type.STRING, description: "Ein kurzer, prägnanter Titel für die Analyse." },
+                summary: { type: Type.STRING, description: "Eine Zusammenfassung der Analyse in 2-3 Sätzen." },
+                key_insights: {
+                    type: Type.ARRAY,
+                    description: "Eine Liste von 3-5 wichtigen Erkenntnissen aus den Daten.",
+                    items: { type: Type.STRING }
+                },
+                recommendations: {
+                    type: Type.ARRAY,
+                    description: "Eine Liste von 2-3 umsetzbaren Empfehlungen basierend auf der Analyse.",
+                    items: { type: Type.STRING }
+                }
+            }
+        };
+
         try {
-             const response = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: 'data-analysis',
-                    payload: { description }
-                })
+            const prompt = `Du bist ein erfahrener Datenanalyst. Basierend auf der folgenden Beschreibung, generiere ein plausibles, fiktives Datenset in deinem Gedächtnis (zeige es nicht an). Analysiere dieses Datenset und gib einen Titel, eine Zusammenfassung, 3-5 Schlüsselerkenntnisse und 2-3 Handlungsempfehlungen zurück. Die Beschreibung des Nutzers ist: "${description}". Formatiere deine Antwort ausschließlich als JSON gemäß dem vorgegebenen Schema.`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                }
             });
 
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
-            
-            const result = await response.json();
+            const result = JSON.parse(response.text);
 
             resultContainer.innerHTML = `
                 <h3>${result.title}</h3>
@@ -502,9 +529,13 @@ const setupTranslation = () => {
 
     if (!modal || !card || !closeButton || !form || !submitButton || !sourceLang || !targetLang || !sourceText || !targetText || !loadingOverlay) return;
 
+    let ai: GoogleGenAI | null = null;
 
     const openModal = () => {
         modal.classList.add('visible');
+        if (!ai) {
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        }
         sourceText.focus();
     };
 
@@ -538,28 +569,21 @@ const setupTranslation = () => {
         const fromLang = sourceLang.value;
         const toLang = targetLang.value;
 
-        if (!textToTranslate) return;
+        if (!textToTranslate || !ai) return;
 
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
         sourceText.disabled = true;
 
         try {
-            const response = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: 'translate',
-                    payload: { text: textToTranslate, from: fromLang, to: toLang }
-                })
+            const prompt = `Translate the following text from ${fromLang} to ${toLang}. Provide only the translated text, without any additional explanations or context. The text is: "${textToTranslate}"`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
             });
 
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
-
-            const data = await response.json();
-            targetText.value = data.text;
+            targetText.value = response.text;
 
         } catch (error) {
             console.error("Error during translation:", error);
@@ -586,10 +610,14 @@ const setupAudioProcessing = () => {
 
     if (!modal || !card || !closeButton || !form || !submitButton || !audioUpload || !transcriptionResult || !loadingOverlay || !audioFileName) return;
 
+    let ai: GoogleGenAI | null = null;
     let uploadedAudioData: { mimeType: string; data: string } | null = null;
 
     const openModal = () => {
         modal.classList.add('visible');
+        if (!ai) {
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        }
     };
 
     const closeModal = () => {
@@ -643,27 +671,21 @@ const setupAudioProcessing = () => {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!uploadedAudioData) return;
+        if (!uploadedAudioData || !ai) return;
 
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
 
         try {
-            const response = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: 'audio-transcribe',
-                    payload: { audio: uploadedAudioData }
-                })
+            const audioPart = { inlineData: uploadedAudioData };
+            const textPart = { text: "Transcribe this audio file." };
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: { parts: [audioPart, textPart] },
             });
 
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
-
-            const data = await response.json();
-            transcriptionResult.value = data.text;
+            transcriptionResult.value = response.text;
 
         } catch (error) {
             console.error("Error during transcription:", error);
@@ -691,8 +713,13 @@ const setupCodeAssistant = () => {
 
     if (!modal || !card || !closeButton || !form || !input || !languageSelect || !submitButton || !resultContainer || !codeResult || !placeholder || !loadingOverlay) return;
 
+    let ai: GoogleGenAI | null = null;
+
     const openModal = () => {
         modal.classList.add('visible');
+        if (!ai) {
+             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        }
         input.focus();
     };
 
@@ -731,7 +758,7 @@ const setupCodeAssistant = () => {
         e.preventDefault();
         const description = input.value.trim();
         const language = languageSelect.value;
-        if (!description) return;
+        if (!description || !ai) return;
 
         loadingOverlay.style.display = 'flex';
         submitButton.disabled = true;
@@ -740,21 +767,14 @@ const setupCodeAssistant = () => {
         resultContainer.style.display = 'none';
 
         try {
-            const response = await fetch('/api/gemini', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    task: 'code-assist',
-                    payload: { description, language }
-                })
+            const prompt = `You are an expert programmer. Your task is to act as a code assistant. The user is working with ${language}. The user's request is: "${description}". Provide only the code block as a response, without any additional explanations, introductions, or markdown formatting like \`\`\`${language.toLowerCase()}\n. Just the raw code.`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
             });
 
-            if (!response.ok) {
-                throw new Error('API request failed');
-            }
-
-            const data = await response.json();
-            codeResult.textContent = data.text;
+            codeResult.textContent = response.text;
             resultContainer.style.display = 'block';
 
         } catch (error) {
@@ -768,6 +788,7 @@ const setupCodeAssistant = () => {
         }
     });
 };
+
 
 // Main function to initialize all scripts
 const main = () => {
@@ -795,6 +816,3 @@ if (document.readyState === 'loading') {
 } else {
     main();
 }
-
-// Fix: Add export to treat file as a module and prevent global scope conflicts.
-export {};
