@@ -4,6 +4,8 @@
 */
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 
+const GEMINI_API_KEY = "AIzaSyCtfACHJmRMtRxqiDUS2LgeUhXDZYEjap0";
+
 // Function to handle particle animation
 const initParticles = () => {
     const particlesContainer = document.querySelector('.particles');
@@ -196,7 +198,7 @@ const setupAiChat = () => {
         chatInput.focus();
         
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
             chat = ai.chats.create({
               model: 'gemini-2.5-flash',
               config: {
@@ -279,7 +281,7 @@ const setupImageGeneration = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+             ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
         }
     };
 
@@ -409,7 +411,7 @@ const setupDataAnalysis = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+             ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
         }
         input.focus();
     };
@@ -534,7 +536,7 @@ const setupTranslation = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+             ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
         }
         sourceText.focus();
     };
@@ -616,7 +618,7 @@ const setupAudioProcessing = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+             ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
         }
     };
 
@@ -718,7 +720,7 @@ const setupCodeAssistant = () => {
     const openModal = () => {
         modal.classList.add('visible');
         if (!ai) {
-             ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+             ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
         }
         input.focus();
     };
